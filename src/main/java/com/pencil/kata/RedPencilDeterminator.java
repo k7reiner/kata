@@ -20,8 +20,7 @@ public class RedPencilDeterminator {
     }
 
     public Boolean priceStableForLast30Days(Product product) {
-        LocalDate date30DaysAgo = LocalDate.now().minusDays(30);
-        return product.getDateLastPriceChange().isBefore(date30DaysAgo);
+        return product.getDateLastPriceChange().isBefore(LocalDate.now().minusDays(29));
     }
 
     public Boolean priceReductionWithinLimits(Product product) {

@@ -7,6 +7,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -26,31 +29,57 @@ public class RedPencilDeterminatorTest {
     }
 
     @Test
-    public void priceDidNotIncreaseReturnsTrueWhenLastPriceIsHigher() {
+    public void priceHasBeenReducedReturnsTrueWhenLastPriceIsHigher() {
 
         when(product.getPreviousPrice()).thenReturn(20.00);
         when(product.getPrice()).thenReturn(10.00);
 
         assertThat(redPencilDeterminator.priceHasBeenReduced(product)).isEqualTo(true);
-
     }
 
     @Test
-    public void priceDidNotIncreaseReturnsFalseWhenLastPriceIsLower() {
+    public void priceHasBeenReducedReturnsFalseWhenLastPriceIsLower() {
 
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(20.00);
 
         assertThat(redPencilDeterminator.priceHasBeenReduced(product)).isEqualTo(false);
-
     }
 
     @Test
-    public void priceDidNotIncreaseReturnsFalseWhenLastPriceIsSame() {
+    public void priceHasBeenReducedReturnsFalseWhenLastPriceIsSame() {
         when(product.getPreviousPrice()).thenReturn(20.00);
         when(product.getPrice()).thenReturn(20.00);
 
         assertThat(redPencilDeterminator.priceHasBeenReduced(product)).isEqualTo(false);
     }
 
+    @Test
+    public void previousPriceHasBeenStableForAtLeast30Days() {
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(30));
+
+        assertThat(redPencilDeterminator.priceStableForLast30Days(product)).isEqualTo(true);
+
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
+
+        assertThat(redPencilDeterminator.priceStableForLast30Days(product)).isEqualTo(false);
+    }
+
+    @Test
+    public void priceReductionIsBetween5And30Percent() {
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(9.50);
+
+        assertThat(redPencilDeterminator.priceReductionWithinLimits(product)).isEqualTo(true);
+
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(5.50);
+
+        assertThat(redPencilDeterminator.priceReductionWithinLimits(product)).isEqualTo(false);
+
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(15.50);
+
+        assertThat(redPencilDeterminator.priceReductionWithinLimits(product)).isEqualTo(false);
+    }
 }
