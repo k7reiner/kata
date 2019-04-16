@@ -94,4 +94,27 @@ public class RedPencilDeterminatorTest {
         assertThat(redPencilDeterminator.redPencilWithin30DayMaxPromoLength(product)).isEqualTo(true);
     }
 
+    @Test
+    public void determinesIfPriceIncreasedDuringPromo() {
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(15));
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(15.00);
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(15));
+
+        assertThat(redPencilDeterminator.priceIncreasedDuringPromo(product)).isEqualTo(true);
+
+        when(product.getPreviousPrice()).thenReturn(15.00);
+        when(product.getPrice()).thenReturn(10.00);
+
+        assertThat(redPencilDeterminator.priceIncreasedDuringPromo(product)).isEqualTo(false);
+    }
+
+    @Test
+    public void priceReductionDuringPromoDoesNotExceed30Percent() {
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(15));
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(5.00);
+
+        assertThat(redPencilDeterminator.validInPromoPriceReduction(product)).isEqualTo(false);
+    }
 }

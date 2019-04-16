@@ -39,4 +39,17 @@ public class RedPencilDeterminator {
         }
         return null;
     }
+
+    public Boolean priceIncreasedDuringPromo(Product product) {
+        if(redPencilWithin30DayMaxPromoLength(product)) {
+            return !priceHasBeenReduced(product);
+        }
+        return null;
+    }
+
+
+    public Boolean validInPromoPriceReduction(Product product) {
+        double upperLimit = .30;
+            return ((product.getPreviousPrice() - product.getPrice() ) / product.getPreviousPrice()) < upperLimit;
+    }
 }
