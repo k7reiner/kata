@@ -82,4 +82,16 @@ public class RedPencilDeterminatorTest {
 
         assertThat(redPencilDeterminator.priceReductionWithinLimits(product)).isEqualTo(false);
     }
+
+    @Test
+    public void verifyRedPencilStartDateDoesNotExceed30DayMaxLength() {
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
+
+        assertThat(redPencilDeterminator.redPencilWithin30DayMaxPromoLength(product)).isEqualTo(false);
+
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(30));
+
+        assertThat(redPencilDeterminator.redPencilWithin30DayMaxPromoLength(product)).isEqualTo(true);
+    }
+
 }

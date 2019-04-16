@@ -29,4 +29,14 @@ public class RedPencilDeterminator {
         double priceReduction = (product.getPreviousPrice() / product.getPrice())-1;
         return priceReduction >= lowerLimit && priceReduction <= upperLimit ? true : false;
     }
+
+    public Boolean redPencilWithin30DayMaxPromoLength(Product product) {
+        int maxPromoLength = 30;
+        LocalDate redPencilStartDate = product.getRedPencilStartDate();
+        if(redPencilStartDate != null) {
+            return redPencilStartDate.isAfter(LocalDate.now().minusDays(maxPromoLength)) ||
+                    redPencilStartDate.isEqual(LocalDate.now().minusDays(maxPromoLength));
+        }
+        return null;
+    }
 }
