@@ -15,6 +15,23 @@ public class RedPencilDeterminator {
         this.fauxProductRepository = fauxProductRepository;
     }
 
+    public Boolean activateRedPencil(Product product) {
+        if(isCurrentlyARedPencilSaleItem(product)) {
+            return (priceIncreasedDuringPromo(product)
+                    || !validInPromoPriceReduction(product))
+                    || !redPencilWithin30DayMaxPromoLength(product) ? false : true;
+        } else {
+            return meetsRedPencilCriteria(product);
+        }
+    }
+
+    public Boolean meetsRedPencilCriteria(Product product) {
+        return priceHasBeenReduced(product)
+                && priceStableForLast30Days(product)
+                && priceReductionWithinLimits(product)
+                && previousPromoDoesNotIntersect(product);
+    }
+
     public Boolean priceHasBeenReduced(Product product) {
         return product.getPreviousPrice() > product.getPrice();
     }
@@ -26,7 +43,7 @@ public class RedPencilDeterminator {
     public Boolean priceReductionWithinLimits(Product product) {
         double lowerLimit = .05;
         double upperLimit = .30;
-        double priceReduction = (product.getPreviousPrice() / product.getPrice())-1;
+        double priceReduction = (product.getPreviousPrice() - product.getPrice()) / product.getPreviousPrice();
         return priceReduction >= lowerLimit && priceReduction <= upperLimit ? true : false;
     }
 
@@ -37,7 +54,7 @@ public class RedPencilDeterminator {
             return redPencilStartDate.isAfter(LocalDate.now().minusDays(maxPromoLength)) ||
                     redPencilStartDate.isEqual(LocalDate.now().minusDays(maxPromoLength));
         }
-        return null;
+        return true;
     }
 
     public Boolean priceIncreasedDuringPromo(Product product) {
@@ -47,9 +64,21 @@ public class RedPencilDeterminator {
         return null;
     }
 
+    public Boolean isCurrentlyARedPencilSaleItem(Product product) {
+        return product.getRedPencil();
+    }
+
 
     public Boolean validInPromoPriceReduction(Product product) {
         double upperLimit = .30;
-            return ((product.getPreviousPrice() - product.getPrice() ) / product.getPreviousPrice()) < upperLimit;
+        if (product.getRedPencil()) {
+            return ((product.getPreviousPrice() - product.getPrice()) / product.getPreviousPrice()) < upperLimit;
+        }
+        return null;
+    }
+
+    public boolean previousPromoDoesNotIntersect(Product product) {
+        int lastPromoDaysLimit = 30;
+        return product.getRedPencilStartDate().isBefore(LocalDate.now().minusDays(lastPromoDaysLimit));
     }
 }

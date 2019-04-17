@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 public class RedPencilDeterminatorTest {
 
     private RedPencilDeterminator redPencilDeterminator;
+
     @Mock
     private FauxProductRepository fauxProductRepository;
 
@@ -96,7 +97,6 @@ public class RedPencilDeterminatorTest {
 
     @Test
     public void determinesIfPriceIncreasedDuringPromo() {
-        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(15));
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(15.00);
         when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(15));
@@ -111,10 +111,80 @@ public class RedPencilDeterminatorTest {
 
     @Test
     public void priceReductionDuringPromoDoesNotExceed30Percent() {
-        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(15));
+        when(product.getRedPencil()).thenReturn(true);
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(5.00);
 
         assertThat(redPencilDeterminator.validInPromoPriceReduction(product)).isEqualTo(false);
+    }
+
+    @Test
+    public void determinesIfProductCurrentlyHasARedPencil() {
+        when(product.getRedPencil()).thenReturn(true);
+
+        assertThat(redPencilDeterminator.isCurrentlyARedPencilSaleItem(product)).isEqualTo(true);
+
+        when(product.getRedPencil()).thenReturn(false);
+
+        assertThat(redPencilDeterminator.isCurrentlyARedPencilSaleItem(product)).isEqualTo(false);
+    }
+
+    @Test
+    public void noPreviousRedPencilPromoInLast30Days() {
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
+
+        assertThat(redPencilDeterminator.previousPromoDoesNotIntersect(product)).isEqualTo(true);
+
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(29));
+
+        assertThat(redPencilDeterminator.previousPromoDoesNotIntersect(product)).isEqualTo(false);
+    }
+
+    @Test
+    public void determinesIfPromoStartConditionsAfterPriceDropAreMet() {
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(9.50);
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(30));
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
+
+        assertThat(redPencilDeterminator.meetsRedPencilCriteria(product)).isEqualTo(true);
+
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(4.50);
+
+        assertThat(redPencilDeterminator.meetsRedPencilCriteria(product)).isEqualTo(false);
+
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
+
+        assertThat(redPencilDeterminator.meetsRedPencilCriteria(product)).isEqualTo(false);
+    }
+
+    @Test
+    public void activateRedPencilReturnsTrueWhenStartConditionsMet() {
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(9.50);
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(30));
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
+
+        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(true);
+
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
+
+        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(false);
+    }
+
+    @Test
+    public void deactivatesCurrentPromo() {
+        when(product.getRedPencil()).thenReturn(true);
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(15.00);
+
+        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(false);
+
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(9.00);
+
+        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(true);
+
     }
 }
