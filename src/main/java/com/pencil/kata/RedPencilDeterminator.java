@@ -5,49 +5,53 @@ import com.pencil.kata.repository.FauxProductRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class RedPencilDeterminator {
 
     private FauxProductRepository fauxProductRepository;
+    private Product product;
 
     public RedPencilDeterminator(FauxProductRepository fauxProductRepository) {
         this.fauxProductRepository = fauxProductRepository;
     }
 
-    public Boolean activateRedPencil(Product product) {
-        if(isCurrentlyARedPencilSaleItem(product)) {
-            return (priceIncreasedDuringPromo(product)
-                    || !validInPromoPriceReduction(product))
-                    || !redPencilWithin30DayMaxPromoLength(product) ? false : true;
+    public Boolean isQualified(String id) {
+        this.product = fauxProductRepository.getProductById(id);
+        if(isCurrentlyARedPencilSaleItem()) {
+            List criteriaChecklist = Arrays.asList(priceHasBeenReduced(), validInPromoPriceReduction(), redPencilWithin30DayMaxPromoLength());
+            Boolean foundFailingCriteria = criteriaChecklist.stream().anyMatch(criteria -> criteria.equals(false));
+            return !foundFailingCriteria;
         } else {
-            return meetsRedPencilCriteria(product);
+            return meetsRedPencilCriteria();
         }
     }
 
-    public Boolean meetsRedPencilCriteria(Product product) {
-        return priceHasBeenReduced(product)
-                && priceStableForLast30Days(product)
-                && priceReductionWithinLimits(product)
-                && previousPromoDoesNotIntersect(product);
+    private Boolean meetsRedPencilCriteria() {
+        return priceHasBeenReduced()
+                && priceStableForLast30Days()
+                && priceReductionWithinLimits()
+                && previousPromoDoesNotIntersect();
     }
 
-    public Boolean priceHasBeenReduced(Product product) {
+    private Boolean priceHasBeenReduced() {
         return product.getPreviousPrice() > product.getPrice();
     }
 
-    public Boolean priceStableForLast30Days(Product product) {
+    private Boolean priceStableForLast30Days() {
         return product.getDateLastPriceChange().isBefore(LocalDate.now().minusDays(29));
     }
 
-    public Boolean priceReductionWithinLimits(Product product) {
+    private Boolean priceReductionWithinLimits() {
         double lowerLimit = .05;
         double upperLimit = .30;
         double priceReduction = (product.getPreviousPrice() - product.getPrice()) / product.getPreviousPrice();
         return priceReduction >= lowerLimit && priceReduction <= upperLimit ? true : false;
     }
 
-    public Boolean redPencilWithin30DayMaxPromoLength(Product product) {
+    private Boolean redPencilWithin30DayMaxPromoLength() {
         int maxPromoLength = 30;
         LocalDate redPencilStartDate = product.getRedPencilStartDate();
         if(redPencilStartDate != null) {
@@ -57,19 +61,11 @@ public class RedPencilDeterminator {
         return true;
     }
 
-    public Boolean priceIncreasedDuringPromo(Product product) {
-        if(redPencilWithin30DayMaxPromoLength(product)) {
-            return !priceHasBeenReduced(product);
-        }
-        return null;
-    }
-
-    public Boolean isCurrentlyARedPencilSaleItem(Product product) {
+    private Boolean isCurrentlyARedPencilSaleItem() {
         return product.getRedPencil();
     }
 
-
-    public Boolean validInPromoPriceReduction(Product product) {
+    private Boolean validInPromoPriceReduction() {
         double upperLimit = .30;
         if (product.getRedPencil()) {
             return ((product.getPreviousPrice() - product.getPrice()) / product.getPreviousPrice()) < upperLimit;
@@ -77,7 +73,7 @@ public class RedPencilDeterminator {
         return null;
     }
 
-    public boolean previousPromoDoesNotIntersect(Product product) {
+    private boolean previousPromoDoesNotIntersect() {
         int lastPromoDaysLimit = 30;
         return product.getRedPencilStartDate().isBefore(LocalDate.now().minusDays(lastPromoDaysLimit));
     }

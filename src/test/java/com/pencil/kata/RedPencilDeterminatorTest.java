@@ -24,167 +24,112 @@ public class RedPencilDeterminatorTest {
     @Mock
     private Product product;
 
+    private String id = "mockId1";
+
     @Before
     public void setUp() throws Exception {
         redPencilDeterminator = new RedPencilDeterminator(fauxProductRepository);
-    }
-
-    @Test
-    public void priceHasBeenReducedReturnsTrueWhenLastPriceIsHigher() {
-
-        when(product.getPreviousPrice()).thenReturn(20.00);
-        when(product.getPrice()).thenReturn(10.00);
-
-        assertThat(redPencilDeterminator.priceHasBeenReduced(product)).isEqualTo(true);
-    }
-
-    @Test
-    public void priceHasBeenReducedReturnsFalseWhenLastPriceIsLower() {
-
+        when(fauxProductRepository.getProductById(id)).thenReturn(product);
         when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(20.00);
-
-        assertThat(redPencilDeterminator.priceHasBeenReduced(product)).isEqualTo(false);
-    }
-
-    @Test
-    public void priceHasBeenReducedReturnsFalseWhenLastPriceIsSame() {
-        when(product.getPreviousPrice()).thenReturn(20.00);
-        when(product.getPrice()).thenReturn(20.00);
-
-        assertThat(redPencilDeterminator.priceHasBeenReduced(product)).isEqualTo(false);
-    }
-
-    @Test
-    public void previousPriceHasBeenStableForAtLeast30Days() {
+        when(product.getPrice()).thenReturn(8.00);
         when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(30));
-
-        assertThat(redPencilDeterminator.priceStableForLast30Days(product)).isEqualTo(true);
-
-        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
-
-        assertThat(redPencilDeterminator.priceStableForLast30Days(product)).isEqualTo(false);
-    }
-
-    @Test
-    public void priceReductionIsBetween5And30Percent() {
-        when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(9.50);
-
-        assertThat(redPencilDeterminator.priceReductionWithinLimits(product)).isEqualTo(true);
-
-        when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(5.50);
-
-        assertThat(redPencilDeterminator.priceReductionWithinLimits(product)).isEqualTo(false);
-
-        when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(15.50);
-
-        assertThat(redPencilDeterminator.priceReductionWithinLimits(product)).isEqualTo(false);
-    }
-
-    @Test
-    public void verifyRedPencilStartDateDoesNotExceed30DayMaxLength() {
         when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
-
-        assertThat(redPencilDeterminator.redPencilWithin30DayMaxPromoLength(product)).isEqualTo(false);
-
-        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(30));
-
-        assertThat(redPencilDeterminator.redPencilWithin30DayMaxPromoLength(product)).isEqualTo(true);
+        when(product.getRedPencil()).thenReturn(false);  //not currently a red pencil promo.
     }
 
     @Test
-    public void determinesIfPriceIncreasedDuringPromo() {
+    public void idQualifiedReturnsTrueWhenAllCriteriaAreMet() {
+
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(true);
+    }
+
+    @Test
+    public void isQualifiedReturnsFalseWhenPreviousPriceIsLowerOrEqual() {
         when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(15.00);
-        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(15));
+        when(product.getPrice()).thenReturn(20.00);
 
-        assertThat(redPencilDeterminator.priceIncreasedDuringPromo(product)).isEqualTo(true);
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
 
-        when(product.getPreviousPrice()).thenReturn(15.00);
+        when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(10.00);
 
-        assertThat(redPencilDeterminator.priceIncreasedDuringPromo(product)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
     }
 
     @Test
-    public void priceReductionDuringPromoDoesNotExceed30Percent() {
+    public void isQualifiedReturnsFalseIfPriceReductionDuringPromoExceeds30Percent() {
         when(product.getRedPencil()).thenReturn(true);
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(30));
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(5.00);
 
-        assertThat(redPencilDeterminator.validInPromoPriceReduction(product)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
     }
 
     @Test
-    public void determinesIfProductCurrentlyHasARedPencil() {
-        when(product.getRedPencil()).thenReturn(true);
+    public void isQualifiedReturnsFalseIfPreviousPriceHasNotBeenStableForAtLeast30Days() {
+        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
 
-        assertThat(redPencilDeterminator.isCurrentlyARedPencilSaleItem(product)).isEqualTo(true);
-
-        when(product.getRedPencil()).thenReturn(false);
-
-        assertThat(redPencilDeterminator.isCurrentlyARedPencilSaleItem(product)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
     }
 
     @Test
-    public void noPreviousRedPencilPromoInLast30Days() {
-        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
+    public void isQualifiedReturnsFalseIfPriceReductionIsNotBetween5And30Percent() {
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(6.99);
 
-        assertThat(redPencilDeterminator.previousPromoDoesNotIntersect(product)).isEqualTo(true);
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
 
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(9.51);
+
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+    }
+
+    @Test
+    public void isQualifiedReturnsFalseIfPreviousRedPencilPromoInIntersectsLast30Days() {
         when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(29));
 
-        assertThat(redPencilDeterminator.previousPromoDoesNotIntersect(product)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
     }
 
-    @Test
-    public void determinesIfPromoStartConditionsAfterPriceDropAreMet() {
-        when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(9.50);
-        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(30));
-        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
-
-        assertThat(redPencilDeterminator.meetsRedPencilCriteria(product)).isEqualTo(true);
-
-        when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(4.50);
-
-        assertThat(redPencilDeterminator.meetsRedPencilCriteria(product)).isEqualTo(false);
-
-        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
-
-        assertThat(redPencilDeterminator.meetsRedPencilCriteria(product)).isEqualTo(false);
-    }
+    //validate current red pencil promos should remain active
 
     @Test
-    public void activateRedPencilReturnsTrueWhenStartConditionsMet() {
-        when(product.getPreviousPrice()).thenReturn(10.00);
-        when(product.getPrice()).thenReturn(9.50);
-        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(30));
-        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
-
-        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(true);
-
-        when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
-
-        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(false);
-    }
-
-    @Test
-    public void deactivatesCurrentPromo() {
+    public void returnsTrueForAnExistingRedPromoWhenAllCriteriaAreMet() {
         when(product.getRedPencil()).thenReturn(true);
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(30));
+
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(true);
+    }
+
+    @Test
+    public void returnsFalseIfPriceIncreasedDuringPromo() {
+        when(product.getRedPencil()).thenReturn(true);
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(30));
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(15.00);
 
-        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+    }
 
+    @Test
+    public void returnsFalseIfInPromoPriceReductionExceeds30Percent() {
+        when(product.getRedPencil()).thenReturn(true);
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(29));
+        when(product.getPreviousPrice()).thenReturn(10.00);
+        when(product.getPrice()).thenReturn(6.90);
+
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+    }
+
+    @Test
+    public void returnsFalseIfCurrentPromoExceeds30DayMaxPromoLength() {
+        when(product.getRedPencil()).thenReturn(true);
+        when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(31));
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(9.00);
 
-        assertThat(redPencilDeterminator.activateRedPencil(product)).isEqualTo(true);
-
+        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
     }
 }
