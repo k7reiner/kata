@@ -2,11 +2,8 @@ package com.pencil.kata.domain;
 
 
 import lombok.Getter;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDate;
 
-@Component
 @Getter
 public class Product {
 
