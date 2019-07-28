@@ -1,6 +1,5 @@
 package com.pencil.kata.domain;
 
-
 import java.time.LocalDate;
 
 public class Product {

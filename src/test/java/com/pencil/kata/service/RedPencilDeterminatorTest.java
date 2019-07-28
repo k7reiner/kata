@@ -17,17 +17,13 @@ public class RedPencilDeterminatorTest {
     private RedPencilDeterminator redPencilDeterminator;
 
     @Mock
-    private FauxProductRepository fauxProductRepository;
-
-    @Mock
     private Product product;
 
     private String id = "mockId1";
 
     @Before
     public void setUp() throws Exception {
-        redPencilDeterminator = new RedPencilDeterminator(fauxProductRepository);
-        when(fauxProductRepository.getProductById(id)).thenReturn(product);
+        redPencilDeterminator = new RedPencilDeterminator();
         when(product.getPreviousPrice()).thenReturn(50.00);
         when(product.getPrice()).thenReturn(40.00);
         when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(30));
@@ -36,9 +32,9 @@ public class RedPencilDeterminatorTest {
     }
 
     @Test
-    public void idQualifiedReturnsTrueWhenAllCriteriaAreMet() {
+    public void isQualifiedReturnsTrueWhenAllCriteriaAreMet() {
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(true);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(true);
     }
 
     @Test
@@ -46,12 +42,12 @@ public class RedPencilDeterminatorTest {
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(20.00);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
 
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(10.00);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 
     @Test
@@ -61,14 +57,14 @@ public class RedPencilDeterminatorTest {
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(5.00);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 
     @Test
     public void isQualifiedReturnsFalseIfPreviousPriceHasNotBeenStableForAtLeast30Days() {
         when(product.getDateLastPriceChange()).thenReturn(LocalDate.now().minusDays(29));
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 
     @Test
@@ -76,19 +72,19 @@ public class RedPencilDeterminatorTest {
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(6.99);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
 
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(9.51);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 
     @Test
     public void isQualifiedReturnsFalseIfPreviousRedPencilPromoInIntersectsLast30Days() {
         when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(29));
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 
     //validate current red pencil promos should remain active
@@ -98,7 +94,7 @@ public class RedPencilDeterminatorTest {
         when(product.getRedPencil()).thenReturn(true);
         when(product.getRedPencilStartDate()).thenReturn(LocalDate.now().minusDays(30));
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(true);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(true);
     }
 
     @Test
@@ -108,7 +104,7 @@ public class RedPencilDeterminatorTest {
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(15.00);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 
     @Test
@@ -118,7 +114,7 @@ public class RedPencilDeterminatorTest {
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(6.90);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 
     @Test
@@ -128,6 +124,6 @@ public class RedPencilDeterminatorTest {
         when(product.getPreviousPrice()).thenReturn(10.00);
         when(product.getPrice()).thenReturn(9.00);
 
-        assertThat(redPencilDeterminator.isQualified(id)).isEqualTo(false);
+        assertThat(redPencilDeterminator.isQualified(product)).isEqualTo(false);
     }
 }

@@ -1,7 +1,6 @@
 package com.pencil.kata.service;
 
 import com.pencil.kata.domain.Product;
-import com.pencil.kata.repository.FauxProductRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -11,15 +10,10 @@ import java.util.List;
 @Component
 public class RedPencilDeterminator {
 
-    private FauxProductRepository fauxProductRepository;
     private Product product;
 
-    public RedPencilDeterminator(FauxProductRepository fauxProductRepository) {
-        this.fauxProductRepository = fauxProductRepository;
-    }
-
-    public Boolean isQualified(String id) {
-        this.product = fauxProductRepository.getProductById(id);
+    public Boolean isQualified(Product product) {
+        this.product = product;
         if(isCurrentlyARedPencilSaleItem()) {
             List criteriaChecklist = Arrays.asList(priceHasBeenReduced(), validInPromoPriceReduction(), redPencilWithin30DayMaxPromoLength());
             return !criteriaChecklist.stream().anyMatch(criteria -> criteria.equals(false));
