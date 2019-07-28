@@ -35,6 +35,10 @@ public class Product {
         return dateLastPriceChange;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public Boolean getRedPencil() {
         return redPencil;
     }
