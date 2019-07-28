@@ -1,10 +1,8 @@
 package com.pencil.kata.domain;
 
 
-import lombok.Getter;
 import java.time.LocalDate;
 
-@Getter
 public class Product {
 
     private String id;
@@ -25,4 +23,27 @@ public class Product {
         this.redPencilStartDate = redPencilStartDate;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public LocalDate getDateLastPriceChange() {
+        return dateLastPriceChange;
+    }
+
+    public Boolean getRedPencil() {
+        return redPencil;
+    }
+
+    public double getPreviousPrice() {
+        return previousPrice;
+    }
+
+    public LocalDate getRedPencilStartDate() {
+        return redPencilStartDate;
+    }
 }
